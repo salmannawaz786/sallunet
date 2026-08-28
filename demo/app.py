@@ -94,7 +94,7 @@ NOTES = """
   backlighting, and motion blur all degrade the matte.
 
 Full benchmark, method, and the complete record of what *didn't* work:
-[github.com/salmannawaz/sallunet](https://github.com/salmannawaz/sallunet)
+[github.com/salmannawaz786/sallunet](https://github.com/salmannawaz786/sallunet)
 """
 
 with gr.Blocks(title="SalluNet — human background removal") as demo:

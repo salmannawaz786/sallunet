@@ -1,6 +1,8 @@
 # SalluNet
 
-**A 15 MB background-removal model for people, by [SalluLabs](https://github.com/salmannawaz).**
+**A 15 MB background-removal model for people, by [SalluLabs](https://github.com/salmannawaz786).**
+
+Weights on the Hub: **[salluu3432/sallunet](https://huggingface.co/salluu3432/sallunet)**
 
 4.03M parameters, distilled from BiRefNet and trained on ~14k images for about
 $33 of serverless GPU.
