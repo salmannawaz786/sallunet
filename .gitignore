@@ -4,6 +4,7 @@ __pycache__/
 
 # Large artifacts live on Modal Volumes, not in git
 *.onnx
+*.wasm
 *.pt
 *.tar
 manifest_coco.json
