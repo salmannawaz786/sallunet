@@ -41,6 +41,49 @@ model and this project does not beat it outright.
 from — because 70% of the training mix was P3M's *human-drawn* alphas, not
 teacher pseudo-labels. The student learned from people, not just from a model.
 
+### What that looks like
+
+`band_mad` is an abstraction. This is the thing it measures, on photographs from
+outside any of the three models' training data.
+
+Every model runs exactly as `baseline_eval.py` runs it — squashed to 512², alpha
+resized back to the original frame, RVM's recurrent states starting at zero. Top
+row is the cutout over a checkerboard; bottom row is the same crop of the hair,
+enlarged. Reproduce with `python compare_visual.py`.
+
+**Backlit flyaway hair against a sunset.** rembg and RVM both keep a slab of
+orange sky as a halo; the strands survive in all three, but only one of them
+stops at the hair.
+
+![Backlit comparison](docs/compare-backlit.jpg)
+
+**Hair in motion.** rembg's edge is visibly polygonal — a segmentation boundary
+traced around hair rather than through it. RVM softens the boundary into a grey
+band. SalluNet resolves individual strands.
+
+![Flyaway comparison](docs/compare-flyaway.jpg)
+
+**Wind-blown strands against a clean sky**, the easiest possible case for a
+segmenter. rembg still drops the thin strands entirely.
+
+![Windswept comparison](docs/compare-windswept.jpg)
+
+**Soft curls against foliage.** The failure modes separate cleanly here: rembg
+cuts a hard silhouette, RVM produces a translucent halo the width of the curl,
+SalluNet keeps the curl and drops the background.
+
+![Curls comparison](docs/compare-curls.jpg)
+
+Two things these pictures do **not** show, and should not be read as showing:
+
+- **Speed.** RVM is 2.1× faster than SalluNet, and these crops say nothing about
+  that. The comparison here is quality only.
+- **A general win.** On subjects with no soft edge — a headscarf, a bare
+  shoulder — all three are indistinguishable, and RVM still beats SalluNet on
+  whole-image `mad`/`sad`. The advantage is specifically at the hair boundary.
+  Sheets for all twelve test images, including the ones where nothing separates
+  the models, are written to `docs/compare/`.
+
 ### Caveats that belong next to the numbers
 
 - **This is an in-domain result.** The eval split and 70% of training are both
@@ -194,6 +237,7 @@ python launch.py v1                      # student training    (A100, ~$2.60)
 modal run evaluate.py::compare           # held-out metrics
 modal run baseline_eval.py::main         # rembg / RVM / teacher / control
 modal run export_bench.py::main          # ONNX + CPU latency
+python compare_visual.py --images testdata --rvm rvm.onnx  # the sheets above
 ```
 
 GPU is used only where a neural network actually runs — labelling and training.
