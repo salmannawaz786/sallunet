@@ -22,68 +22,20 @@ SESSION = ort.InferenceSession(MODEL_PATH, _opts,
 INPUT_NAME = SESSION.get_inputs()[0].name
 
 
-def _box_filter(img: np.ndarray, r: int) -> np.ndarray:
-    try:
-        import cv2
-        return cv2.boxFilter(img, -1, (r, r))
-    except Exception:
-        h, w = img.shape
-        pad = np.pad(img, ((r, r), (r, r)), mode="edge")
-        ii = np.pad(pad.cumsum(axis=0).cumsum(axis=1), ((1, 0), (1, 0)))
-        res = (ii[2 * r + 1:2 * r + 1 + h, 2 * r + 1:2 * r + 1 + w]
-               - ii[0:h, 2 * r + 1:2 * r + 1 + w]
-               - ii[2 * r + 1:2 * r + 1 + h, 0:w]
-               + ii[0:h, 0:w])
-        return res / ((2 * r + 1) * (2 * r + 1))
-
-
-def _guided_filter(guide_rgb: np.ndarray, src_alpha: np.ndarray, r: int = 4, eps: float = 1e-3) -> np.ndarray:
-    """Guided filter snapping 512 alpha edges to full-res RGB photo boundaries."""
-    gray = (0.299 * guide_rgb[..., 0] + 0.587 * guide_rgb[..., 1] + 0.114 * guide_rgb[..., 2]).astype(np.float32)
-    mean_I = _box_filter(gray, r)
-    mean_p = _box_filter(src_alpha, r)
-    mean_Ip = _box_filter(gray * src_alpha, r)
-    cov_Ip = mean_Ip - mean_I * mean_p
-    mean_II = _box_filter(gray * gray, r)
-    var_I = mean_II - mean_I * mean_I
-    a = cov_Ip / (var_I + eps)
-    b = mean_p - a * mean_I
-    mean_a = _box_filter(a, r)
-    mean_b = _box_filter(b, r)
-    q = mean_a * gray + mean_b
-    return np.clip(q, 0.0, 1.0)
-
-
 def _predict_alpha(image: Image.Image) -> np.ndarray:
-    """Return a crisp, edge-aligned alpha matte in [0,1] at original resolution."""
+    """Return an alpha matte in [0,1] at the image's original resolution."""
     w, h = image.size
     small = image.convert("RGB").resize((SIZE, SIZE), Image.BILINEAR)
     x = np.asarray(small, dtype=np.float32) / 255.0
     x = np.transpose(x, (2, 0, 1))[None]  # NCHW
 
-    alpha_512 = SESSION.run(None, {INPUT_NAME: x})[0][0, 0]
-    alpha_512 = np.clip(alpha_512, 0.0, 1.0)
+    alpha = SESSION.run(None, {INPUT_NAME: x})[0][0, 0]
+    alpha = np.clip(alpha, 0.0, 1.0)
 
-    # 1. Bicubic upsample to original dimensions
-    a_img = Image.fromarray((alpha_512 * 255).astype(np.uint8))
-    alpha_up = np.asarray(a_img.resize((w, h), Image.BICUBIC), dtype=np.float32) / 255.0
-
-    # 2. Guided Filter alignment with original full-res RGB image
-    rgb_norm = np.asarray(image.convert("RGB"), dtype=np.float32) / 255.0
-    alpha_guided = _guided_filter(rgb_norm, alpha_up, r=4, eps=1e-3)
-
-    # 3. Clean background noise floor & solid foreground core
-    alpha_guided[alpha_guided < 0.015] = 0.0
-    alpha_guided[alpha_guided > 0.985] = 1.0
-
-    # 4. Adaptive contrast S-curve for crisp solid edges + soft hair
-    gamma = 1.4
-    alpha_refined = np.where(
-        alpha_guided < 0.5,
-        0.5 * np.power(2.0 * alpha_guided, gamma),
-        1.0 - 0.5 * np.power(2.0 * (1.0 - alpha_guided), gamma)
-    )
-    return np.clip(alpha_refined, 0.0, 1.0)
+    return np.asarray(
+        Image.fromarray((alpha * 255).astype(np.uint8)).resize((w, h),
+                                                               Image.BILINEAR),
+        dtype=np.float32) / 255.0
 
 
 def _hex_to_rgb(value: str):
