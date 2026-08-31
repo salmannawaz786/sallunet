@@ -57,6 +57,18 @@ stops at the hair.
 
 ![Backlit comparison](docs/compare-backlit.jpg)
 
+**Windblown hair quality and negative space.** SalluNet cleanly separates fine flying strands with true transparency between locks, while rembg glues solid sky slabs and RMBG-1.4 creates severe speckle noise artifacts.
+
+![Windblown hair quality](docs/compare-windblown-quality.jpg)
+
+**Complex fine strand separation & raised hands.** SalluNet preserves delicate hair flyaways and finger outlines without halos, where rembg leaves thick white borders and RMBG-1.4 suffers background noise blowouts.
+
+![Hair strand separation](docs/compare-hair-separation.jpg)
+
+**Speed vs Quality on complex curls (Yacht deck).** SalluNet processes intricate curly hair in **~1.7s on CPU** (3× faster than RMBG-1.4's 6.0s) without cutting off fine curls or creating RVM's smoky grey halos.
+
+![Speed and quality comparison](docs/compare-speed-yacht.jpg)
+
 **Hair in motion.** rembg's edge is visibly polygonal — a segmentation boundary
 traced around hair rather than through it. RVM softens the boundary into a grey
 band. SalluNet resolves individual strands.
@@ -81,7 +93,7 @@ Two things these pictures do **not** show, and should not be read as showing:
 - **A general win.** On subjects with no soft edge — a headscarf, a bare
   shoulder — all three are indistinguishable, and RVM still beats SalluNet on
   whole-image `mad`/`sad`. The advantage is specifically at the hair boundary.
-  Sheets for all twelve test images, including the ones where nothing separates
+  Sheets for all test images, including the ones where nothing separates
   the models, are written to `docs/compare/`.
 
 ### Caveats that belong next to the numbers

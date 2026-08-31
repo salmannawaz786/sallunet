@@ -119,6 +119,16 @@ with gr.Blocks(title="SalluNet — human background removal") as demo:
     inp.upload(run, inputs=[inp, background, colour],
                outputs=[out_cutout, out_matte])
 
+    with gr.Accordion("🔍 Visual Comparisons vs rembg, RVM & RMBG-1.4", open=False):
+        gr.Markdown("### 1. Windblown Hair Quality & Negative Space\nSalluNet cleanly separates fine flying strands with true transparency between locks, while rembg glues solid sky slabs and RMBG-1.4 creates severe speckle noise artifacts.")
+        gr.Image(os.path.join(os.path.dirname(__file__), "compare-windblown-quality.jpg"), show_label=False)
+        
+        gr.Markdown("### 2. Complex Fine Strand Separation & Raised Hands\nSalluNet preserves delicate hair flyaways and finger outlines without halos, where rembg leaves thick white borders and RMBG-1.4 suffers background noise blowouts.")
+        gr.Image(os.path.join(os.path.dirname(__file__), "compare-hair-separation.jpg"), show_label=False)
+        
+        gr.Markdown("### 3. Speed vs Quality on Complex Curls (Yacht Deck)\nSalluNet processes intricate curly hair in **~1.7s on CPU** (3× faster than RMBG-1.4's 6.0s) without cutting off fine curls or creating RVM's smoky grey halos.")
+        gr.Image(os.path.join(os.path.dirname(__file__), "compare-speed-yacht.jpg"), show_label=False)
+
     gr.Markdown(NOTES)
 
 if __name__ == "__main__":
